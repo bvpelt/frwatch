@@ -1,0 +1,77 @@
+using Toybox.WatchUi;
+using Toybox.Lang;
+
+class ClockViewDelegate extends WatchUi
+.BehaviorDelegate {
+  private var _logger;
+
+  function initialize() {
+    BehaviorDelegate.initialize();
+    _logger = getLogger();
+
+    _logger.debug(
+        "ClockViewDelegate",
+        "=== ClockViewDelegate initialized with default view: ClockView");
+  }
+
+  // ============================================================
+  // PREVIOUS VIEW (ENTER long press)
+  // Works on button-only devices
+  // ============================================================
+
+  function onSelectHold() {
+    _logger.debug("ClockViewDelegate", "onSelectHold → PREVIOUS view");
+
+    goPreviousView();
+    return true;
+  }
+
+  // ============================================================
+  // NEXT VIEW (BACK short press)
+  // ESC always maps here on simulator + devices
+  // ============================================================
+
+  function onBack() {
+    _logger.debug("ClockViewDelegate", "onBack → NEXT view");
+
+    goNextView();
+    return true;
+  }
+
+  function onSwipe(swipeEvent as WatchUi.SwipeEvent) as Lang.Boolean {
+    var direction = swipeEvent.getDirection();
+
+    if (direction == WatchUi.SWIPE_LEFT) {
+      _logger.debug("ClockViewDelegate", "Swipe - switching to Analog view");
+
+      goPreviousView();
+      return true;
+    } else if (direction == WatchUi.SWIPE_RIGHT) {
+      _logger.debug("ClockViewDelegate", "Swipe - switching to Analog view");
+
+      goNextView();
+      return true;
+    }
+    return false;
+  }
+
+  // ============================================================
+  // NAVIGATION HELPERS (keep logic clean)
+  // ============================================================
+
+  private function goNextView() {
+    _logger.debug("ClockViewDelegate", "Switching to (next) Analog view");
+
+    WatchUi.switchToView(getAnalogView(), new AnalogViewDelegate(),
+                         WatchUi.SLIDE_RIGHT);
+    return true;
+  }
+
+  private function goPreviousView() {
+    _logger.debug("ClockViewDelegate", "Switching to (previous) Analog view");
+
+    WatchUi.switchToView(getAnalogView(), new AnalogViewDelegate(),
+                         WatchUi.SLIDE_RIGHT);
+    return true;
+  }
+}

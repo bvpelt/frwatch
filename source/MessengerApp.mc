@@ -1,0 +1,178 @@
+using Toybox.Application;
+using Toybox.Lang;
+using Toybox.WatchUi;
+using Toybox.Communications;
+using Toybox.System;
+
+class MessengerApp extends Application
+.AppBase {
+  private var _heartbeatTimer;
+  private var _clockView;
+  private var _analogView;
+  private var _logger;
+  private var _propertieUtility;
+
+  function initialize() {
+    AppBase.initialize();
+    _logger = getLogger();
+    _propertieUtility = getPropertieUtility();
+    _logger.debug("MessengerApp", "=== MessengerApp initialize START ===");
+
+    var minimumDebugLevel =
+        _propertieUtility.getPropertyNumber("MinimalDebugLevel", 0);
+
+    if (minimumDebugLevel != null) {
+      _logger.info("MessengerApp",
+                   "=== Retrieved minimum debuglevel from properties: " +
+                       minimumDebugLevel);
+    } else {
+      _logger.info("MessengerApp", "=== No minimum debuglevel property " +
+                                       "found, defaulting to 0 (LEVEL_TRACE)");
+      minimumDebugLevel = 0;
+    }
+
+    _logger.setMinLevel(minimumDebugLevel);
+    _logger.info("MessengerApp",
+                 "=== Set minimum debuglevel ===" + minimumDebugLevel);
+
+    _logger.debug("MessengerApp", "=== MessengerApp initialize COMPLETE ===");
+  }
+
+  function onStart(state as Lang.Dictionary?) as Void
+  {
+    _logger.debug("MessengerApp", "=== onStart ===");
+
+    // Start heartbeat timer for UI updates
+    _heartbeatTimer = new Timer.Timer();
+    _heartbeatTimer.start(method(: onHeartbeat), 1000, true);
+  }
+
+  function onStop(state as Lang.Dictionary?) as Void
+  {
+    _logger.debug("MessengerApp", "=== onStop ===");
+
+    // Stop timers
+    if (_heartbeatTimer != null) {
+      _heartbeatTimer.stop();
+    }
+  }
+
+  // Use manually tracked view
+  function onHeartbeat() as Void {
+    // Update the current display
+    WatchUi.requestUpdate();
+  }
+
+  function onSettingsChanged() {
+    _logger.info("MessengerApp", "=== Settings changed by user ===");
+
+    // 1. Update the IsCustomProfile logic
+    var profile = Application.Properties.getValue("ColorProfile");
+
+    // If profile is 4 (Custom), set the hidden property to true
+    Application.Properties.setValue("IsCustomProfile", profile == 4);
+
+    // 2. Tell the active views to refresh their colors/settings
+    // Since we use Singletons, we can call them directly
+    if (_analogView == null) {
+      _analogView = getAnalogView();
+    }
+    _analogView.updateSettings();
+
+    // 3. Force a UI refresh
+    WatchUi.requestUpdate();
+  }
+
+  function getInitialView()
+      as[WatchUi.Views] or[WatchUi.Views, WatchUi.InputDelegates] {
+    _logger.debug("MessengerApp", "=== getInitialView START ===");
+
+    try {
+      var viewMode = Application.Properties.getValue("ViewMode");
+      _logger.debug("MessengerApp", "ViewMode: " + viewMode);
+
+      if (viewMode == null) {
+        viewMode = 0; // Default to Clock view
+      }
+
+      switch (viewMode) {
+      case 0:
+        _logger.debug("MessengerApp", "=== Returning ClockView ===");
+        if (_clockView == null) {
+          _clockView = new ClockView();
+        }
+        return ([
+          _clockView, new ClockViewDelegate()
+        ] as[WatchUi.Views, WatchUi.InputDelegates]);
+      case 1:
+        _logger.debug("MessengerApp", "=== Returning AnalogView ===");
+        if (_analogView == null) {
+          _analogView = getAnalogView();
+        }
+        return ([
+          _analogView, new AnalogViewDelegate()
+        ] as[WatchUi.Views, WatchUi.InputDelegates]);
+
+      default:
+        _logger.debug("MessengerApp", "=== Returning ClockView ===");
+        if (_clockView == null) {
+          _clockView = new ClockView();
+        }
+        return ([
+          _clockView, new ClockViewDelegate()
+        ] as[WatchUi.Views, WatchUi.InputDelegates]);
+      }
+
+    } catch (ex) {
+      _logger.debug("MessengerApp",
+                    "ERROR in getInitialView: " + ex.getErrorMessage());
+      // Return a minimal view as fallback
+      _logger.debug("MessengerApp", "=== Failure Returning ClockView ===");
+      if (_clockView == null) {
+        _clockView = new ClockView();
+      }
+      return (
+          [_clockView,
+           new ClockViewDelegate()] as[WatchUi.Views, WatchUi.InputDelegates]);
+    }
+  }
+}
+
+function getApp() as MessengerApp {
+  return Application.getApp() as MessengerApp;
+}
+
+// global convenience function
+// Rename function to avoid symbol collision with the property 'isSimulator'
+function checkIsSimulator() {
+  var devSettings = System.getDeviceSettings();
+  getLogger().debug("checkIsSimulator",
+                    "simulator part number: " + devSettings.partNumber +
+                        " expected pattern: 006-BXXXX-XX");
+
+  // 1. Check the official property if the device supports it
+  // clang-format off
+    if (devSettings has :isSimulator) {
+  // clang-format off
+        // Explicitly compare to true to avoid type confusion
+        if (devSettings.isSimulator == true) {
+            getLogger().debug("checkIsSimulator", "isSimulator");
+            return true;
+        }
+    }
+    
+    // 2. Fallback check using the Simulator Part Number
+    // (006-B0000-00 is the standard simulator part number)
+    var partNumber = devSettings.partNumber;
+
+    if (partNumber != null && 
+        partNumber.length() >= 5 && 
+        partNumber.substring(0, 5).equals("006-B")) {
+        // Part number starts with "006-B"
+        getLogger().debug("checkIsSimulator", "Part number starts with 006-B");
+        return true;
+    }
+    
+    getLogger().debug("checkIsSimulator", "Not in simulator");
+    return false;
+}
