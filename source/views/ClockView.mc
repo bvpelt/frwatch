@@ -7,37 +7,40 @@ using Toybox.Time.Gregorian;
 
 class ClockView extends WatchUi
 .View {
-  private var logger;
+  private var _logger;
 
   // Private constructor
   function initialize() {
-    logger = getLogger();
+    _logger = getLogger();
     View.initialize();
 
-    logger.debug("ClockView", "=== ClockView initialized ===");
+    _logger.debug("ClockView", "=== ClockView initialized ===");
   }
 
   function onLayout(dc as Graphics.Dc) as Void {
-    logger.debug("ClockView", "=== ClockView onLayout ===");
+    _logger.debug("ClockView", "=== ClockView onLayout ===");
   }
 
   function onUpdateHeartbeat() { WatchUi.requestUpdate(); }
 
   function onShow() as Void {
-    logger.debug("ClockView", "=== ClockView onShow ===");
+    _logger.debug("ClockView", "=== ClockView onShow ===");
   }
 
   // This is called when the view is hidden/closed
-  function onHide() { logger.debug("ClockView", "=== ClockView onHide ==="); }
+  function onHide() { _logger.debug("ClockView", "=== ClockView onHide ==="); }
 
   function onUpdate(dc as Graphics.Dc) as Void {
-    logger.trace("ClockView", "=== ClockView onUpdate ===");
+    _logger.trace("ClockView", "=== ClockView onUpdate ===");
     var width = dc.getWidth();
     var height = dc.getHeight();
 
     // Clear screen
     dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
     dc.clear();
+
+    // Draw Bluetooth connection status (top-right corner)
+    drawBluetoothStatus(dc, width / 2, height);
 
     // Draw time
     var clockTime = System.getClockTime();
@@ -65,6 +68,63 @@ class ClockView extends WatchUi
 
     dc.drawText(width / 2, (height * 2) / 3, Graphics.FONT_SMALL, dateString,
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+  }
+
+  private function drawBluetoothStatus(dc as Graphics.Dc, width as Lang.Number,
+                                       height as Lang.Number) as Void {
+    var phoneConnection = getPhoneConnection();
+    var status = phoneConnection.getConnectionStatus();
+
+    var color;
+    if (status == PhoneConnection.STATUS_CONNECTED) {
+      color = Graphics.COLOR_GREEN;
+    } else if (status == PhoneConnection.STATUS_CONNECTING) {
+      color = Graphics.COLOR_YELLOW;
+    } else {
+      color = Graphics.COLOR_RED;
+    }
+
+    // Draw Bluetooth symbol in top-right corner
+    var x = width - 20;
+    var y = 25;
+    var size = 16;
+
+    _logger.debug("ClockView", "Draw bluetooth status: " + status +
+                                   " at x: " + x + " y: " + y);
+    drawBluetoothSymbol(dc, x, y, size, color);
+  }
+
+  private function drawBluetoothSymbol(
+      dc as Graphics.Dc, centerX as Lang.Number, centerY as Lang.Number,
+      size as Lang.Number, color as Lang.Number) as Void {
+    dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+
+    var halfSize = size / 2;
+    var quarterSize = size / 4;
+
+    // Draw central vertical line
+    dc.setPenWidth(2);
+    dc.drawLine(centerX, centerY - halfSize, centerX, centerY + halfSize);
+
+    // Draw upper triangle (top-right)
+    dc.fillPolygon([
+      [centerX, centerY - halfSize],
+      [centerX + halfSize, centerY - quarterSize], [centerX, centerY]
+    ]);
+
+    // Draw lower triangle (bottom-right)
+    dc.fillPolygon([
+      [centerX, centerY], [centerX + halfSize, centerY + quarterSize],
+      [centerX, centerY + halfSize]
+    ]);
+
+    // Draw upper left line
+    dc.drawLine(centerX, centerY - halfSize, centerX - halfSize,
+                centerY - quarterSize);
+
+    // Draw lower left line
+    dc.drawLine(centerX, centerY + halfSize, centerX - halfSize,
+                centerY + quarterSize);
   }
 
   function onEnterSleep() as Void {}

@@ -1,21 +1,25 @@
 using Toybox.Application;
 using Toybox.Lang;
 using Toybox.WatchUi;
-using Toybox.Communications;
 using Toybox.System;
 
 class MessengerApp extends Application
 .AppBase {
-  private var _heartbeatTimer;
   private var _clockView;
   private var _analogView;
+  private var _heartbeatTimer;
   private var _logger;
   private var _propertieUtility;
+  private var _connectionMonitor;
+  private var _phoneConnection;
+  private var _lastPhoneConnectionStatus;
 
   function initialize() {
     AppBase.initialize();
     _logger = getLogger();
+    _phoneConnection = getPhoneConnection();
     _propertieUtility = getPropertieUtility();
+    _lastPhoneConnectionStatus = false;
     _logger.debug("MessengerApp", "=== MessengerApp initialize START ===");
 
     var minimumDebugLevel =
@@ -42,6 +46,10 @@ class MessengerApp extends Application
   {
     _logger.debug("MessengerApp", "=== onStart ===");
 
+    // Start connection monitoring
+    _connectionMonitor = new Timer.Timer();
+    _connectionMonitor.start(method(: checkPhoneConnection), 5000, true);
+
     // Start heartbeat timer for UI updates
     _heartbeatTimer = new Timer.Timer();
     _heartbeatTimer.start(method(: onHeartbeat), 1000, true);
@@ -61,6 +69,35 @@ class MessengerApp extends Application
   function onHeartbeat() as Void {
     // Update the current display
     WatchUi.requestUpdate();
+  }
+
+  function checkPhoneConnection() as Void {
+    var deviceSettings = System.getDeviceSettings();
+    var isConnected = false;
+
+    if (deviceSettings has: phoneConnected) {
+      isConnected = deviceSettings.phoneConnected;
+    }
+
+    // Check if status changed
+    if (isConnected != _lastPhoneConnectionStatus) {
+      _logger.info("MessengerApp",
+                   "Phone connection changed: " + _lastPhoneConnectionStatus +
+                       " -> " + isConnected);
+
+      if (isConnected) {
+        _phoneConnection.updateConnectionStatus(
+            PhoneConnection.STATUS_CONNECTED);
+        _logger.info("MessengerApp", "Phone connected via Bluetooth");
+      } else {
+        _phoneConnection.updateConnectionStatus(
+            PhoneConnection.STATUS_DISCONNECTED);
+        _logger.info("MessengerApp", "Phone disconnected");
+      }
+
+      _lastPhoneConnectionStatus = isConnected;
+      WatchUi.requestUpdate();
+    }
   }
 
   function onSettingsChanged() {
