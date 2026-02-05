@@ -8,6 +8,7 @@ using Toybox.Time.Gregorian;
 class ClockView extends WatchUi
 .View {
   private var _logger;
+  private var _iconFont;
 
   // Private constructor
   function initialize() {
@@ -19,6 +20,7 @@ class ClockView extends WatchUi
 
   function onLayout(dc as Graphics.Dc) as Void {
     _logger.debug("ClockView", "=== ClockView onLayout ===");
+    _iconFont = WatchUi.loadResource(Rez.Fonts.IconFont);
   }
 
   function onUpdateHeartbeat() { WatchUi.requestUpdate(); }
@@ -86,12 +88,18 @@ class ClockView extends WatchUi
 
     // Draw Bluetooth symbol in top-right corner
     var x = width / 2;
-    var y = 30;
+    var y = 40;
     var size = 16;
 
     _logger.debug("ClockView", "Draw bluetooth status: " + status +
                                    " at x: " + x + " y: " + y);
-    drawBluetoothSymbol(dc, x, y, size, color);
+
+    dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+    var bluetoothIcon = "\ue904";
+    // We assume 'b' is the character mapped to the Bluetooth symbol
+    dc.drawText(x, y, _iconFont, bluetoothIcon,
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+    //    drawBluetoothSymbol(dc, x, y, size, color);
   }
 
   private function drawBluetoothSymbol(dc as Graphics.Dc, x as Lang.Number,

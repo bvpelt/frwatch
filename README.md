@@ -1,4 +1,5 @@
 # frwatch
+
 Watch implementation
 
 Published: https://apps.garmin.com/apps/619d861b-b12f-44ab-ad85-2c05f574aeaf
@@ -6,17 +7,16 @@ Published: https://apps.garmin.com/apps/619d861b-b12f-44ab-ad85-2c05f574aeaf
 # Publishing
 
 - change debug level to Warning in the resources/properties/properties.xml and save this file
->> <property id="MinimalDebugLevel" type="number">3</property>
+  > > <property id="MinimalDebugLevel" type="number">3</property>
 - build an export
->> ```make clean-storage export```
-- publish the new app using https://apps.garmin.com/en-US/developer/upload  and/or https://apps.garmin.com/apps/619d861b-b12f-44ab-ad85-2c05f574aeaf 
-- publish a revised app using https://apps.garmin.com/en-US/developer/dashboard 
-
+  > > `make clean-storage export`
+- publish the new app using https://apps.garmin.com/en-US/developer/upload and/or https://apps.garmin.com/apps/619d861b-b12f-44ab-ad85-2c05f574aeaf
+- publish a revised app using https://apps.garmin.com/en-US/developer/dashboard
 
 # Navigation
 
 | Input type       | Action           |
-|------------------|------------------|
+| ---------------- | ---------------- |
 | Swipe left/right | Switch views     |
 | Back button      | Switch backwards |
 | Select short     | Add message      |
@@ -25,12 +25,12 @@ Published: https://apps.garmin.com/apps/619d861b-b12f-44ab-ad85-2c05f574aeaf
 **key mapping**
 | Simulator / Watch Button | Delegate Method |
 |--------------------------|-----------------|
-| Click / Tap / Space	   | onSelect()      | 
-| Start / Enter	         | onSelect()      | 
-| Long Start	         | onSelectHold()  | 
-| ESC / Back	         | onBack()        | 
-| Long ESC	               | onBackHold()    | 
-| Swipe	               | onSwipe()       | 
+| Click / Tap / Space | onSelect() |
+| Start / Enter | onSelect() |
+| Long Start | onSelectHold() |
+| ESC / Back | onBack() |
+| Long ESC | onBackHold() |
+| Swipe | onSwipe() |
 
 # Events
 
@@ -140,6 +140,7 @@ function onRelease(clickEvent) → true/false
 **Event Flow Example**
 
 **Scenario: User swipes left on ClockView**
+
 ```
 User swipes left
     ↓
@@ -187,6 +188,7 @@ New View Stack:
 ```
 
 # Return Values Matter
+
 Returning true:
 
 "I handled this event"
@@ -215,9 +217,35 @@ MessengerApp
 ```
 
 # Examples
-- https://github.com/CodyJung/connectiq-apps
 
+- https://github.com/CodyJung/connectiq-apps
 
 # Fonts
 
-- generate font based on .svg files https://icomoon.io/ 
+- generate font based on .svg files https://icomoon.io/
+- convert font for garmin https://angelcode.com/products/bmfont/
+
+This is the part most developers find tricky. You don't "write" these files; you generate them:
+
+Find an SVG: Download a Bluetooth SVG (e.g., from FontAwesome or Google Material Icons).
+
+Use a Web Tool: Go to IcoMoon.io.
+
+Upload your SVG.
+
+Click Generate Font.
+
+Under "Preferences," ensure the "Class Prefix" is simple.
+
+Convert for Garmin: Use the BMFont (AngelCode) tool to export the font as a .fnt file and a single-bit (White on Transparent) .png.
+
+Crucial: Connect IQ fonts must be white on a transparent/black background in the PNG; the dc.setColor command replaces the white pixels with your chosen color.
+
+The Resource File (resources/fonts/fonts.xml)
+First, you must define the font in your resources. You will need a .fnt (mapping file) and a .png (the actual glyphs) created by a tool like BMFont or FontAssetCreator.
+
+```xml
+<resources>
+    <font id="IconFont" filename="fonts/icons.fnt" antialias="true" />
+</resources>
+```
