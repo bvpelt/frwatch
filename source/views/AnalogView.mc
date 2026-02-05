@@ -256,7 +256,7 @@ class AnalogView extends WatchUi
     // Position in top area (not overlapping with other elements)
     var width = dc.getWidth();
     var x = width / 2; // Center top
-    var y = 25;
+    var y = 45;
     var size = 14;
 
     _logger.debug("AnalogView", "Draw bluetooth status: " + status +
@@ -265,7 +265,15 @@ class AnalogView extends WatchUi
     drawBluetoothSymbol(dc, x, y, size, color);
   }
 
-  private function drawBluetoothSymbol(
+  private function drawBluetoothSymbol(dc as Graphics.Dc, x as Lang.Number,
+                                       y as Lang.Number, size as Lang.Number,
+                                       color as Lang.Number) as Void {
+    dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+    dc.drawText(x, y, Graphics.FONT_MEDIUM, "\u24B7",
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+  }
+
+  private function drawBluetoothSymbolx(
       dc as Graphics.Dc, centerX as Lang.Number, centerY as Lang.Number,
       size as Lang.Number, color as Lang.Number) as Void {
     dc.setColor(color, Graphics.COLOR_TRANSPARENT);

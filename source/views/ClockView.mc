@@ -40,7 +40,7 @@ class ClockView extends WatchUi
     dc.clear();
 
     // Draw Bluetooth connection status (top-right corner)
-    drawBluetoothStatus(dc, width / 2, height);
+    drawBluetoothStatus(dc, width, height);
 
     // Draw time
     var clockTime = System.getClockTime();
@@ -85,8 +85,8 @@ class ClockView extends WatchUi
     }
 
     // Draw Bluetooth symbol in top-right corner
-    var x = width - 20;
-    var y = 25;
+    var x = width / 2;
+    var y = 30;
     var size = 16;
 
     _logger.debug("ClockView", "Draw bluetooth status: " + status +
@@ -94,7 +94,15 @@ class ClockView extends WatchUi
     drawBluetoothSymbol(dc, x, y, size, color);
   }
 
-  private function drawBluetoothSymbol(
+  private function drawBluetoothSymbol(dc as Graphics.Dc, x as Lang.Number,
+                                       y as Lang.Number, size as Lang.Number,
+                                       color as Lang.Number) as Void {
+    dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+    dc.drawText(x, y, Graphics.FONT_LARGE, "\u24B7",
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+  }
+
+  private function drawBluetoothSymbolx(
       dc as Graphics.Dc, centerX as Lang.Number, centerY as Lang.Number,
       size as Lang.Number, color as Lang.Number) as Void {
     dc.setColor(color, Graphics.COLOR_TRANSPARENT);

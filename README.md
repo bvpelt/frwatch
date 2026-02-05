@@ -213,3 +213,11 @@ MessengerApp
         ├── onSelect()        → Go to ClockView
         └── onBack()          → Go to MessagesView
 ```
+
+# Examples
+- https://github.com/CodyJung/connectiq-apps
+
+
+# Fonts
+
+- generate font based on .svg files https://icomoon.io/ 
