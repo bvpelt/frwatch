@@ -12,6 +12,7 @@ class AnalogView extends WatchUi
   private static var _instance as AnalogView ? ;
   private var _logger;
   private var _propertieUtility;
+  private var _iconFont;
 
   private var _radius = 0;
   private var _centerX = 0;
@@ -217,6 +218,7 @@ class AnalogView extends WatchUi
     _centerY = dc.getHeight() / 2;
     var minDimension = _centerX < _centerY ? _centerX : _centerY;
     _radius = minDimension * 0.95;
+    _iconFont = WatchUi.loadResource(Rez.Fonts.IconFont);
   }
 
   function onUpdate(dc) {
@@ -244,66 +246,13 @@ class AnalogView extends WatchUi
     var phoneConnection = getPhoneConnection();
     var status = phoneConnection.getConnectionStatus();
 
-    var color;
-    if (status == PhoneConnection.STATUS_CONNECTED) {
-      color = Graphics.COLOR_GREEN;
-    } else if (status == PhoneConnection.STATUS_CONNECTING) {
-      color = Graphics.COLOR_YELLOW;
-    } else {
-      color = Graphics.COLOR_RED;
-    }
-
-    // Position in top area (not overlapping with other elements)
-    var width = dc.getWidth();
-    var x = width / 2; // Center top
-    var y = 45;
-    var size = 14;
+    var x = (_centerX).toNumber();
+    var y = (_centerY - _radius * 0.55).toNumber();
 
     _logger.debug("AnalogView", "Draw bluetooth status: " + status +
                                     " at x: " + x + " y: " + y);
 
-    drawBluetoothSymbol(dc, x, y, size, color);
-  }
-
-  private function drawBluetoothSymbol(dc as Graphics.Dc, x as Lang.Number,
-                                       y as Lang.Number, size as Lang.Number,
-                                       color as Lang.Number) as Void {
-    dc.setColor(color, Graphics.COLOR_TRANSPARENT);
-    dc.drawText(x, y, Graphics.FONT_MEDIUM, "\u24B7",
-                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-  }
-
-  private function drawBluetoothSymbolx(
-      dc as Graphics.Dc, centerX as Lang.Number, centerY as Lang.Number,
-      size as Lang.Number, color as Lang.Number) as Void {
-    dc.setColor(color, Graphics.COLOR_TRANSPARENT);
-
-    var halfSize = size / 2;
-    var quarterSize = size / 4;
-
-    // Draw central vertical line
-    dc.setPenWidth(2);
-    dc.drawLine(centerX, centerY - halfSize, centerX, centerY + halfSize);
-
-    // Draw upper triangle
-    dc.fillPolygon([
-      [centerX, centerY - halfSize],
-      [centerX + halfSize, centerY - quarterSize], [centerX, centerY]
-    ]);
-
-    // Draw lower triangle
-    dc.fillPolygon([
-      [centerX, centerY], [centerX + halfSize, centerY + quarterSize],
-      [centerX, centerY + halfSize]
-    ]);
-
-    // Draw upper left line
-    dc.drawLine(centerX, centerY - halfSize, centerX - halfSize,
-                centerY - quarterSize);
-
-    // Draw lower left line
-    dc.drawLine(centerX, centerY + halfSize, centerX - halfSize,
-                centerY + quarterSize);
+    ViewUtil.drawBlueTooth(dc, x, y, _iconFont, status);
   }
 
   private function drawFace(dc) {

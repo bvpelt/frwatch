@@ -9,6 +9,9 @@ class ClockView extends WatchUi
 .View {
   private var _logger;
   private var _iconFont;
+  private var _centerX;
+  private var _centerY;
+  private var _radius;
 
   // Private constructor
   function initialize() {
@@ -20,6 +23,10 @@ class ClockView extends WatchUi
 
   function onLayout(dc as Graphics.Dc) as Void {
     _logger.debug("ClockView", "=== ClockView onLayout ===");
+    _centerX = dc.getWidth() / 2;
+    _centerY = dc.getHeight() / 2;
+    var minDimension = _centerX < _centerY ? _centerX : _centerY;
+    _radius = minDimension * 0.95;
     _iconFont = WatchUi.loadResource(Rez.Fonts.IconFont);
   }
 
@@ -41,8 +48,10 @@ class ClockView extends WatchUi
     dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
     dc.clear();
 
-    // Draw Bluetooth connection status (top-right corner)
-    drawBluetoothStatus(dc, width, height);
+    // Draw Bluetooth connection status
+    drawBluetoothStatus(dc);
+
+    drawBatteryStatus(dc);
 
     // Draw time
     var clockTime = System.getClockTime();
@@ -72,75 +81,28 @@ class ClockView extends WatchUi
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
   }
 
-  private function drawBluetoothStatus(dc as Graphics.Dc, width as Lang.Number,
-                                       height as Lang.Number) as Void {
+  private function drawBluetoothStatus(dc as Graphics.Dc) as Void {
     var phoneConnection = getPhoneConnection();
     var status = phoneConnection.getConnectionStatus();
 
-    var color;
-    if (status == PhoneConnection.STATUS_CONNECTED) {
-      color = Graphics.COLOR_GREEN;
-    } else if (status == PhoneConnection.STATUS_CONNECTING) {
-      color = Graphics.COLOR_YELLOW;
-    } else {
-      color = Graphics.COLOR_RED;
-    }
-
-    // Draw Bluetooth symbol in top-right corner
-    var x = width / 2;
-    var y = 40;
-    var size = 16;
+    var x = (_centerX).toNumber() - 15;
+    var y = (_centerY - _radius * 0.75).toNumber();
 
     _logger.debug("ClockView", "Draw bluetooth status: " + status +
                                    " at x: " + x + " y: " + y);
 
-    dc.setColor(color, Graphics.COLOR_TRANSPARENT);
-    var bluetoothIcon = "\ue904";
-    // We assume 'b' is the character mapped to the Bluetooth symbol
-    dc.drawText(x, y, _iconFont, bluetoothIcon,
-                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-    //    drawBluetoothSymbol(dc, x, y, size, color);
+    ViewUtil.drawBlueTooth(dc, x, y, _iconFont, status);
   }
 
-  private function drawBluetoothSymbol(dc as Graphics.Dc, x as Lang.Number,
-                                       y as Lang.Number, size as Lang.Number,
-                                       color as Lang.Number) as Void {
-    dc.setColor(color, Graphics.COLOR_TRANSPARENT);
-    dc.drawText(x, y, Graphics.FONT_LARGE, "\u24B7",
-                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-  }
+  private function drawBatteryStatus(dc as Graphics.Dc) {
+    var loadPercentage = System.getSystemStats().battery;
+    var x = (_centerX).toNumber() + 15;
+    var y = (_centerY - _radius * 0.75).toNumber();
 
-  private function drawBluetoothSymbolx(
-      dc as Graphics.Dc, centerX as Lang.Number, centerY as Lang.Number,
-      size as Lang.Number, color as Lang.Number) as Void {
-    dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+    _logger.debug("ClockView", "Draw battery percentage: " + loadPercentage +
+                                   " at x: " + x + " y: " + y);
 
-    var halfSize = size / 2;
-    var quarterSize = size / 4;
-
-    // Draw central vertical line
-    dc.setPenWidth(2);
-    dc.drawLine(centerX, centerY - halfSize, centerX, centerY + halfSize);
-
-    // Draw upper triangle (top-right)
-    dc.fillPolygon([
-      [centerX, centerY - halfSize],
-      [centerX + halfSize, centerY - quarterSize], [centerX, centerY]
-    ]);
-
-    // Draw lower triangle (bottom-right)
-    dc.fillPolygon([
-      [centerX, centerY], [centerX + halfSize, centerY + quarterSize],
-      [centerX, centerY + halfSize]
-    ]);
-
-    // Draw upper left line
-    dc.drawLine(centerX, centerY - halfSize, centerX - halfSize,
-                centerY - quarterSize);
-
-    // Draw lower left line
-    dc.drawLine(centerX, centerY + halfSize, centerX - halfSize,
-                centerY + quarterSize);
+    ViewUtil.drawBattery(dc, x, y, _iconFont, loadPercentage);
   }
 
   function onEnterSleep() as Void {}
