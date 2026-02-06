@@ -1,5 +1,6 @@
 using Toybox.Graphics;
 using Toybox.Lang;
+using Toybox.ActivityMonitor;
 
 module ViewUtil {
   var _logger = getLogger();
@@ -28,6 +29,38 @@ module ViewUtil {
     var batterySymbol = mapPercentageToBatterySymbol(percentage);
     dc.drawText(x, y, font, batterySymbol,
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+  }
+
+  public function drawSteps(dc as Graphics.Dc, x, y, font,
+                            info as ActivityMonitor.Info) {
+    var steps = 0;
+    if (info != null && info.steps != null) {
+      steps = info.steps;
+
+      dc.drawText(x, y, font, steps,
+                  Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+    }
+  }
+
+  public function drawDistance(dc as Graphics.Dc, x, y, font,
+                               info as ActivityMonitor.Info) {
+    var distance = 0;
+    if (info != null && info.distance != null) {
+      distance = info.distance / 100; // convert from cm to m
+      var displayString = "";
+
+      if (distance < 1000) {
+        // Format as integer meters
+        displayString = distance.format("%d") + " m";
+      } else {
+        // Convert to km and format with 2 decimal places
+        var km = distance.toFloat() / 1000.0;
+        displayString = km.format("%.2f") + " km";
+      }
+
+      dc.drawText(x, y, font, displayString,
+                  Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+    }
   }
 
   function mapPercentageToBatterySymbol(percentage) {
