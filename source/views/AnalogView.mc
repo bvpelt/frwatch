@@ -40,6 +40,16 @@ class AnalogView extends WatchUi
 
   private var _updateEverySecond = true; // default value
 
+  private var _outerPenWidth;
+  private var _innerPenWidth;
+  private var _bluetoothx;
+  private var _bluetoothy;
+  private var _loadPenWidth;
+  private var _arcRadius;
+  private var _startAngle = 90;
+  private var _secondPenWidth = 3;     // 3 pixels for secondhand
+  private var _minuteTickPenWidth = 2; // 2 pixels for minute ticks
+
   // Profile definitions
   private const PROFILE_CLASSIC = 0;
   private const PROFILE_BLUE_STEEL = 1;
@@ -186,6 +196,7 @@ class AnalogView extends WatchUi
   private function loadCustomColors() {
     _logger.debug("AnalogView",
                   "=== Loading custom colors from properties ===");
+
     // Load each color from properties
     _handbgcolor = _propertieUtility.getPropertyNumber("HandBgColor", 0x504949);
     _handfgcolor = _propertieUtility.getPropertyNumber("HandFgColor", 0xff0000);
@@ -218,6 +229,26 @@ class AnalogView extends WatchUi
     _centerY = dc.getHeight() / 2;
     var minDimension = _centerX < _centerY ? _centerX : _centerY;
     _radius = minDimension * 0.95;
+
+    _outerPenWidth = (_radius * 0.06).toNumber();
+    if (_outerPenWidth < 1) {
+      _outerPenWidth = 1;
+    }
+    _innerPenWidth = (_radius * 0.01).toNumber();
+    if (_innerPenWidth < 1) {
+      _innerPenWidth = 1;
+    }
+
+    _bluetoothx = (_centerX).toNumber();
+    _bluetoothy = (_centerY - _radius * 0.55).toNumber();
+
+    _loadPenWidth = (_radius * 0.05).toNumber();
+    if (_loadPenWidth < 1) {
+      _loadPenWidth = 1;
+    }
+
+    _arcRadius = (_radius * 0.92).toNumber();
+
     _iconFont = WatchUi.loadResource(Rez.Fonts.IconFont);
   }
 
@@ -226,6 +257,12 @@ class AnalogView extends WatchUi
 
     if (_centerX == 0 || _centerY == 0) {
       onLayout(dc); // Safety fallback
+    }
+
+    var useAntiAlias = (dc has: setAntiAlias);
+
+    if (useAntiAlias) {
+      dc.setAntiAlias(true);
     }
 
     dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
@@ -240,19 +277,20 @@ class AnalogView extends WatchUi
     drawDateInfo(dc);
     drawTime(dc);
     drawBluetoothStatus(dc);
+
+    if (useAntiAlias) {
+      dc.setAntiAlias(false);
+    }
   }
 
   private function drawBluetoothStatus(dc as Graphics.Dc) as Void {
     var phoneConnection = getPhoneConnection();
     var status = phoneConnection.getConnectionStatus();
 
-    var x = (_centerX).toNumber();
-    var y = (_centerY - _radius * 0.55).toNumber();
+    _logger.trace("AnalogView", "Draw bluetooth status: " + status + " at x: " +
+                                    _bluetoothx + " y: " + _bluetoothy);
 
-    _logger.debug("AnalogView", "Draw bluetooth status: " + status +
-                                    " at x: " + x + " y: " + y);
-
-    ViewUtil.drawBlueTooth(dc, x, y, _iconFont, status);
+    ViewUtil.drawBlueTooth(dc, _bluetoothx, _bluetoothy, _iconFont, status);
   }
 
   private function drawFace(dc) {
@@ -262,19 +300,11 @@ class AnalogView extends WatchUi
 
     // Outer silver ring
     dc.setColor(_facebordercolor, Graphics.COLOR_TRANSPARENT);
-    var outerPenWidth = (_radius * 0.06).toNumber();
-    if (outerPenWidth < 1) {
-      outerPenWidth = 1;
-    }
-    dc.setPenWidth(outerPenWidth);
+
+    dc.setPenWidth(_outerPenWidth);
     dc.drawCircle(_centerX, _centerY, (_radius * 0.97).toNumber());
 
-    // Inner ring
-    var innerPenWidth = (_radius * 0.01).toNumber();
-    if (innerPenWidth < 1) {
-      innerPenWidth = 1;
-    }
-    dc.setPenWidth(innerPenWidth);
+    dc.setPenWidth(_innerPenWidth);
     dc.drawCircle(_centerX, _centerY, (_radius * 0.9).toNumber());
 
     // Center point
@@ -283,27 +313,20 @@ class AnalogView extends WatchUi
   }
 
   private function drawLoad(dc) {
-    var startAngle = 90;
+    // var startAngle = 90;
     var loadPercentage = System.getSystemStats().battery;
     var sweepAngle = (loadPercentage / 100.0) * 360;
 
-    var loadPenWidth = (_radius * 0.05).toNumber();
-    if (loadPenWidth < 1) {
-      loadPenWidth = 1;
-    }
-
-    var arcRadius = (_radius * 0.92).toNumber();
-
     // Green portion (loaded)
     dc.setColor(_batteryfull, Graphics.COLOR_TRANSPARENT);
-    dc.setPenWidth(loadPenWidth);
-    dc.drawArc(_centerX, _centerY, arcRadius, Graphics.ARC_CLOCKWISE,
-               startAngle, startAngle - sweepAngle);
+    dc.setPenWidth(_loadPenWidth);
+    dc.drawArc(_centerX, _centerY, _arcRadius, Graphics.ARC_CLOCKWISE,
+               _startAngle, _startAngle - sweepAngle);
 
     // Red portion (remaining)
     dc.setColor(_batteryempty, Graphics.COLOR_TRANSPARENT);
-    dc.drawArc(_centerX, _centerY, arcRadius, Graphics.ARC_CLOCKWISE,
-               startAngle - sweepAngle, startAngle);
+    dc.drawArc(_centerX, _centerY, _arcRadius, Graphics.ARC_CLOCKWISE,
+               _startAngle - sweepAngle, _startAngle);
   }
 
   private function drawHourMarkers(dc) {
@@ -346,12 +369,9 @@ class AnalogView extends WatchUi
 
     dc.setColor(_minutetickcolor, Graphics.COLOR_TRANSPARENT);
 
-    // FIX: Ensure pen width is at least 1 pixel and is an integer
-    var penWidth = (_radius * 0.008).toNumber();
-    if (penWidth < 1) {
-      penWidth = 1;
-    }
-    dc.setPenWidth(penWidth);
+    dc.setPenWidth(_minuteTickPenWidth);
+    _logger.trace("AnalogView",
+                  "Miniuteticks penwidth: " + _minuteTickPenWidth);
 
     for (var i = 0; i < 60; i++) {
       if (i % 5 != 0) {
@@ -369,6 +389,30 @@ class AnalogView extends WatchUi
 
         dc.drawLine(xStart, yStart, xEnd, yEnd);
       }
+    }
+  }
+
+  /*
+  Assume pen width and color is already set
+  */
+  private function drawSmoothLine(dc, x1, y1, x2, y2) {
+
+    // 1. Check if the device supports anti-aliasing
+    if (dc has: setAntiAlias) {
+      dc.setAntiAlias(true);
+    }
+
+    // 2. Set your line thickness and color
+    // dc.setPenWidth(2);
+    // dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+
+    // 3. Draw the line
+    dc.drawLine(x1, y1, x2, y2);
+
+    // 4. Best Practice: Turn it off after drawing if you have
+    // performance-heavy elements coming up
+    if (dc has: setAntiAlias) {
+      dc.setAntiAlias(false);
     }
   }
 
@@ -462,11 +506,8 @@ class AnalogView extends WatchUi
       var secondAngle = (second * Math.PI) / 30 - Math.PI / 2;
       dc.setColor(_handfgcolor, Graphics.COLOR_TRANSPARENT);
 
-      var secondPenWidth = (_radius * 0.025).toNumber();
-      if (secondPenWidth < 1) {
-        secondPenWidth = 1;
-      }
-      dc.setPenWidth(secondPenWidth);
+      _logger.trace("AnalogView", "minutehand penwidth: " + _secondPenWidth);
+      dc.setPenWidth(_secondPenWidth);
 
       var x1 = (_centerX - Math.cos(secondAngle) * _radius * 0.1).toNumber();
       var y1 = (_centerY - Math.sin(secondAngle) * _radius * 0.1).toNumber();
