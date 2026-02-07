@@ -222,27 +222,23 @@ MessengerApp
 
 # Fonts
 
-- generate font based on .svg files https://icomoon.io/
-- convert font for garmin https://angelcode.com/products/bmfont/
+To use specific symbols one can use symbols from free fonts. The steps to take are:
+- generate font based on .svg files https://icomoon.io/ (online tool)
+- convert font for garmin https://angelcode.com/products/bmfont/ (only works on windows or for linux users in wine)
 
 This is the part most developers find tricky. You don't "write" these files; you generate them:
-
 Find an SVG: Download a Bluetooth SVG (e.g., from FontAwesome or Google Material Icons).
-
 Use a Web Tool: Go to IcoMoon.io.
-
 Upload your SVG.
 
 Click Generate Font.
-
 Under "Preferences," ensure the "Class Prefix" is simple.
-
 Convert for Garmin: Use the BMFont (AngelCode) tool to export the font as a .fnt file and a single-bit (White on Transparent) .png.
-
 Crucial: Connect IQ fonts must be white on a transparent/black background in the PNG; the dc.setColor command replaces the white pixels with your chosen color.
-
 The Resource File (resources/fonts/fonts.xml)
 First, you must define the font in your resources. You will need a .fnt (mapping file) and a .png (the actual glyphs) created by a tool like BMFont or FontAssetCreator.
+
+The generated font file is [here](./resources/fonts/icons.fnt) with the [bitmaps](./resources/fonts/icons_0.png). The character id is used to identify the symbol in this font. The x and y are the position of the symbol in the bitmap.
 
 ```xml
 <resources>
