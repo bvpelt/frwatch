@@ -245,3 +245,26 @@ The generated font file is [here](./resources/fonts/icons.fnt) with the [bitmaps
     <font id="IconFont" filename="fonts/icons.fnt" antialias="true" />
 </resources>
 ```
+## Font converting
+1. Initial Setup
+      - Download BMFont: Get it from the AngelCode website.
+      - Install your Icon Font: If you downloaded a font (like FontAwesome) or created one via IcoMoon, install the .ttf or .otf file onto your Windows system so BMFont can see it.
+
+2. Font Settings
+      - Open BMFont and go to Options > Font Settings.
+      - Font: Select your installed icon font (e.g., "IcoMoon" or "FontAwesome").
+      - Charset: Set to Unicode.
+      - Size (px): Set this to the height you want the icon to be on your Forerunner 165 (e.g., 24 or 32).
+      - Height %: 100%.
+      - Font Smoothing: Check this if you want anti-aliasing.
+
+3. Export Settings (The "Garmin" Critical Step)
+This is where most developers fail. Go to Options > Export Settings.
+
+      - Padding: Set all to 0.
+      - Spacing: 1 for both horiz and vert.
+      - Bit Depth: 8.
+      - Presets: Select White text with alpha.
+      - Font Descriptor: Select Text. (Garmin cannot read the binary format).
+      - Textures: Select png.
+      - Width/Height: Start with 256 x 256. You want your entire icon set to fit on one single image file.
